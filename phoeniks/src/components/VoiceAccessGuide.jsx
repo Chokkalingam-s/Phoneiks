@@ -1,19 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useVoice } from "./VoiceContext";
 
 const messages = {
   en: {
     combined:
       "Welcome to Phoeniks. For voice Guidance Say 'Enable Voice aid' or click 'Enable button'.",
-    enabled:
-      "Voice guidance activated. This website is developed for specially abled individuals across India. Apply UDID if not registered yet.",
-    selectLang: "Please select your preferred language for voice guidance.",
   },
   hi: {
     combined:
       "फीनिक्स में आपका स्वागत है। वॉइस गाइड के लिए कहें 'आवाज़ सक्षम करें' या 'सक्रिय करें' बटन दबाएं।",
-    enabled:
-      "वॉइस गाइडेंस सक्रिय कर दी गई है। यह वेबसाइट भारत भर के दिव्यांग व्यक्तियों के लिए विकसित की गई है। यदि अभी तक पंजीकरण नहीं किया है तो यूडीआईडी के लिए आवेदन करें।",
-    selectLang: "कृपया अपनी पसंदीदा भाषा चुनें।",
   },
 };
 
@@ -21,7 +16,7 @@ function speak(msg, lang = "en-IN", cb) {
   window.speechSynthesis.cancel();
   const utter = new window.SpeechSynthesisUtterance(msg);
   utter.lang = lang;
-  utter.rate = 0.9; // Slightly slower for clarity
+  utter.rate = 0.9;
   utter.pitch = 1.0;
   utter.volume = 1.0;
   utter.onend = cb;
@@ -30,22 +25,23 @@ function speak(msg, lang = "en-IN", cb) {
 
 function getLangCode(s) {
   s = s.toLowerCase();
-  if (/aawaaz|saksham|आवाज़|आवाज|hindi/.test(s)) return "hi";
+  if (/aawaaz|saksham|आवाज़|आवाज|hindi/i.test(s)) return "hi";
   return "en";
 }
 
 export default function VoiceAccessGuide() {
+  const { voiceEnabled, enableVoice } = useVoice();
+
   const [permissionAsked, setPermissionAsked] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [showLangChoice, setShowLangChoice] = useState(false);
-  const [chosenLang, setChosenLang] = useState("en");
   const [status, setStatus] = useState("ask-guidance");
+
   const recognitionRef = useRef(null);
   const restartTimeoutRef = useRef(null);
 
   useEffect(() => {
-    if (permissionAsked) return;
-    
+    if (permissionAsked || voiceEnabled) return;
+
     if (navigator.mediaDevices && window.SpeechSynthesis) {
       navigator.mediaDevices
         .getUserMedia({ audio: true })
@@ -61,7 +57,7 @@ export default function VoiceAccessGuide() {
       setPermissionAsked(true);
       sequenceWelcome();
     }
-    
+
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
@@ -71,10 +67,9 @@ export default function VoiceAccessGuide() {
       window.speechSynthesis.cancel();
     };
     // eslint-disable-next-line
-  }, []);
+  }, [permissionAsked, voiceEnabled]);
 
   function sequenceWelcome() {
-    // Speak welcome messages while showing "Enable Voice Guidance?" overlay
     speak(messages.en.combined, "en-IN", () => {
       speak(messages.hi.combined, "hi-IN", () => {
         startRecognition();
@@ -85,66 +80,49 @@ export default function VoiceAccessGuide() {
   function startRecognition() {
     if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window))
       return;
-      
+
     if (recognitionRef.current) {
       recognitionRef.current.stop();
       recognitionRef.current = null;
     }
-    
+
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     const recog = new SpeechRecognition();
-    
-    // Improved recognition settings
+
     recog.continuous = true;
-    recog.interimResults = true; // Changed to true for better capture
-    recog.maxAlternatives = 3; // Get multiple alternatives
+    recog.interimResults = false;
+    recog.maxAlternatives = 3;
     recog.lang = "en-IN";
 
-recog.onresult = function (event) {
-  for (let i = event.resultIndex; i < event.results.length; i++) {
-    const transcript = event.results[i][0].transcript.trim().toLowerCase();
+    recog.onresult = function (event) {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (!event.results[i].isFinal) continue;
 
-    console.log("Captured:", transcript); // Debug log
+        const transcript = event.results[i][0].transcript.trim().toLowerCase();
+        console.log("🎤 Initial capture:", transcript);
 
-    const enableCmdRegex = /(enable|voice|aid|guidance|aawaaz|आवाज़|आवाज|saksham|सक्षम|chalu|चालू|karein|करें)/i;
+        const enableCmdRegex = /(enable|voice|aid|guidance|aawaaz|आवाज़|आवाज|saksham|सक्षम|chalu|चालू|karein|करें)/i;
 
-    if (enableCmdRegex.test(transcript)) {
-      // Immediately stop ongoing speech as command recognized
-      window.speechSynthesis.cancel();
-
-      const lang = getLangCode(transcript);
-      onEnableVoice(lang);
-      break;
-    }
-  }
-};
-
-
-    recog.onaudiostart = function() {
-      console.log("Audio capturing started");
-    };
-
-    recog.onsoundstart = function() {
-      console.log("Sound detected");
-    };
-
-    recog.onspeechstart = function() {
-      console.log("Speech detected");
+        if (enableCmdRegex.test(transcript)) {
+          console.log("🔊 Enabling from guide...");
+          window.speechSynthesis.cancel();
+          const lang = getLangCode(transcript);
+          handleEnableVoice(lang);
+          return;
+        }
+      }
     };
 
     recog.onerror = function (e) {
-      console.log("Recognition error:", e.error);
-      
-      // Handle different error types
-      if (e.error === "no-speech") {
-        console.log("No speech detected, restarting...");
-      }
-      
-      if (!voiceEnabled && status === "ask-guidance") {
+      console.log("❌ Guide recognition error:", e.error);
+
+      if (status === "ask-guidance" && !voiceEnabled) {
         restartTimeoutRef.current = setTimeout(() => {
           try {
-            recog.start();
+            if (recognitionRef.current) {
+              recog.start();
+            }
           } catch (err) {
             console.log("Restart error:", err);
           }
@@ -153,11 +131,13 @@ recog.onresult = function (event) {
     };
 
     recog.onend = function () {
-      console.log("Recognition ended");
-      if (!voiceEnabled && status === "ask-guidance") {
+      console.log("⏹️ Guide recognition ended");
+      if (status === "ask-guidance" && !voiceEnabled) {
         restartTimeoutRef.current = setTimeout(() => {
           try {
-            recog.start();
+            if (recognitionRef.current) {
+              recog.start();
+            }
           } catch (err) {
             console.log("Restart error:", err);
           }
@@ -168,30 +148,25 @@ recog.onresult = function (event) {
     try {
       recog.start();
       recognitionRef.current = recog;
-      console.log("Recognition started");
+      console.log("▶️ Guide recognition started");
     } catch (err) {
       console.log("Start error:", err);
     }
   }
 
-  function onEnableVoice(lang = "en") {
-    if (voiceEnabled) return;
-    
-    setVoiceEnabled(true);
-    setChosenLang(lang);
-    setStatus("enabled-announce");
+  function handleEnableVoice(lang) {
+    setStatus("enabled");
 
     if (recognitionRef.current) {
       recognitionRef.current.stop();
       recognitionRef.current = null;
     }
+    if (restartTimeoutRef.current) {
+      clearTimeout(restartTimeoutRef.current);
+    }
 
-    window.speechSynthesis.cancel();
-    
-    // Speak enabled message WITHOUT showing overlay
-    speak(messages[lang].enabled, lang + "-IN", () => {
-      setStatus("enabled");
-    });
+    // Enable through context (this persists across routes)
+    enableVoice(lang);
   }
 
   function enableByClick() {
@@ -200,25 +175,26 @@ recog.onresult = function (event) {
       recognitionRef.current.stop();
       recognitionRef.current = null;
     }
+    if (restartTimeoutRef.current) {
+      clearTimeout(restartTimeoutRef.current);
+    }
   }
 
   function handleLangPick(lang) {
-    setChosenLang(lang);
-    setVoiceEnabled(true);
     setShowLangChoice(false);
-    setStatus("enabled-announce");
-    
-    window.speechSynthesis.cancel();
-    
-    // Speak enabled message WITHOUT showing overlay
-    speak(messages[lang].enabled, lang + "-IN", () => {
-      setStatus("enabled");
-    });
+    setStatus("enabled");
+
+    // Enable through context
+    enableVoice(lang);
+  }
+
+  // Don't show overlay if voice is already enabled
+  if (voiceEnabled || status === "enabled") {
+    return null;
   }
 
   return (
     <div className="voice-guide">
-      {/* Show overlay for ask-guidance and language choice, but NOT for enabled-announce */}
       {status === "ask-guidance" && !showLangChoice && (
         <div className="guide-overlay">
           <div className="guide-box text-center">
@@ -243,17 +219,20 @@ recog.onresult = function (event) {
             >
               Enable
             </button>
-<button
-  onClick={() => {
-    window.speechSynthesis.cancel();
-    setStatus("no-guide");
-  }}
-  className="btn btn-outline-secondary mt-2 ms-2"
-  style={{ borderRadius: 16, minWidth: 110 }}
->
-  Not Now
-</button>
-
+            <button
+              onClick={() => {
+                window.speechSynthesis.cancel();
+                if (recognitionRef.current) {
+                  recognitionRef.current.stop();
+                  recognitionRef.current = null;
+                }
+                setStatus("no-guide");
+              }}
+              className="btn btn-outline-secondary mt-2 ms-2"
+              style={{ borderRadius: 16, minWidth: 110 }}
+            >
+              Not Now
+            </button>
           </div>
         </div>
       )}
@@ -294,8 +273,6 @@ recog.onresult = function (event) {
           </div>
         </div>
       )}
-
-      {/* NO overlay for enabled-announce - voice speaks in background */}
     </div>
   );
 }

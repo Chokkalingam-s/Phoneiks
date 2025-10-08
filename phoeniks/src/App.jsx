@@ -13,8 +13,8 @@ import OrganisationLogin from "./pages/OrganisationLogin";
 import OrganisationDashboard from "./pages/OrganisationDashboard";
 import OrganisationContentUpload from "./pages/OrganisationContentUpload";
 
-
 import { AppProvider, AppContext } from "./context/AppContext.jsx";
+import { VoiceProvider } from "./components/VoiceContext.jsx";
 
 // Wrapper to access location and AppContext
 const MainApp = () => {
@@ -31,24 +31,26 @@ const MainApp = () => {
   };
 
   return (
-    <div style={zoomStyle}>
-      {showVoiceGuide && <VoiceAccessGuide />}
-      <NavBar />
-      <main style={{ minHeight: "80vh" }}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/apply-for-udid" element={<ApplyForUdid />} />
-          <Route path="/apply-udid-form" element={<ApplyUdidForm />} />
-          <Route path="/pwd-login" element={<PwdLogin />} />
-          <Route path="/pwd-dashboard" element={<PwdDashboard />} />
-          <Route path="/organisation-login" element={<OrganisationLogin />} />
-          <Route path="/org-dashboard" element={<OrganisationDashboard />} />
-          <Route path="/organisation-forum" element={<OrganisationContentUpload />} />
-        </Routes>
-      </main>
-      <Footer />
-    </div>
+    <VoiceProvider>
+      <div style={zoomStyle}>
+        {showVoiceGuide && <VoiceAccessGuide />}
+        <NavBar />
+        <main style={{ minHeight: "80vh" }}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/apply-for-udid" element={<ApplyForUdid />} />
+            <Route path="/apply-udid-form" element={<ApplyUdidForm />} />
+            <Route path="/pwd-login" element={<PwdLogin />} />
+            <Route path="/pwd-dashboard" element={<PwdDashboard />} />
+            <Route path="/organisation-login" element={<OrganisationLogin />} />
+            <Route path="/org-dashboard" element={<OrganisationDashboard />} />
+            <Route path="/organisation-forum" element={<OrganisationContentUpload />} />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
+    </VoiceProvider>
   );
 };
 
