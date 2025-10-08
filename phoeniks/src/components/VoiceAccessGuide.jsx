@@ -107,7 +107,7 @@ recog.onresult = function (event) {
 
     console.log("Captured:", transcript); // Debug log
 
-    const enableCmdRegex = /(enable|aawaaz|आवाज़|आवाज|saksham|सक्षम|voice|aid|guidance|chalu|चालू|karein|करें)/i;
+    const enableCmdRegex = /(enable|voice|aid|guidance|aawaaz|आवाज़|आवाज|saksham|सक्षम|chalu|चालू|karein|करें)/i;
 
     if (enableCmdRegex.test(transcript)) {
       // Immediately stop ongoing speech as command recognized
