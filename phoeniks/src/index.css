@@ -1,0 +1,22 @@
+body {
+  font-family: "Poppins", sans-serif;
+  background-color: #ffffff;
+  color: #333;
+}
+
+.text-orange,
+.text-warning {
+  color: #ff7a00 !important;
+}
+
+.btn-orange {
+  background-color: #ff7a00;
+  border: none;
+  color: white;
+  border-radius: 20px;
+  padding: 10px 20px;
+}
+
+.btn-orange:hover {
+  background-color: #e76a00;
+}
