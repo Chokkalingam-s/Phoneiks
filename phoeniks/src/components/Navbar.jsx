@@ -1,46 +1,33 @@
-// src/components/Navbar.jsx
 import React from "react";
+import { Navbar, Nav } from "react-bootstrap";
 import logo from "../assets/logo.png";
 
-export default function Navbar() {
+function NavBar() {
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+    <Navbar bg="light" expand="lg" className="shadow-sm">
       <div className="container">
-        <a className="navbar-brand d-flex align-items-center" href="/">
+        <Navbar.Brand href="/">
           <img
             src={logo}
+            height="36"
+            className="d-inline-block align-top me-2"
             alt="Phoeniks Logo"
-            width="50"
-            height="50"
-            className="me-2"
           />
-          <div>
-            <h5 className="mb-0 fw-bold text-warning">Phoeniks</h5>
-            <small className="text-muted">
-              Inclusive Empowerment Portal
-            </small>
-          </div>
-        </a>
-        <button
-          className="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navMenu"
-        >
-          <span className="navbar-toggler-icon"></span>
-        </button>
-
-        <div className="collapse navbar-collapse" id="navMenu">
-          <ul className="navbar-nav ms-auto mb-2 mb-lg-0">
-            <li className="nav-item"><a className="nav-link active" href="/">Home</a></li>
-            <li className="nav-item"><a className="nav-link" href="#">About</a></li>
-            <li className="nav-item"><a className="nav-link" href="#">Schemes</a></li>
-            <li className="nav-item"><a className="nav-link" href="#">Login</a></li>
-            <li className="nav-item"><a className="nav-link" href="#">Contact</a></li>
-          </ul>
-        </div>
+          Phoeniks
+        </Navbar.Brand>
+        <Navbar.Toggle aria-controls="navbarScroll" />
+        <Navbar.Collapse id="navbarScroll">
+          <Nav className="ms-auto">
+            <Nav.Link href="#">Home</Nav.Link>
+            <Nav.Link href="#">About</Nav.Link>
+            <Nav.Link href="#">Features</Nav.Link>
+            <Nav.Link href="#">Contact</Nav.Link>
+            <Nav.Link href="#">Login</Nav.Link>
+          </Nav>
+        </Navbar.Collapse>
       </div>
-    </nav>
+    </Navbar>
   );
 }
- 
+
+export default NavBar;

@@ -1,22 +1,18 @@
 body {
-  font-family: "Poppins", sans-serif;
-  background-color: #ffffff;
-  color: #333;
+  background-color: #f4f6fa;
+  font-family: 'Segoe UI', Arial, sans-serif;
 }
 
-.text-orange,
-.text-warning {
-  color: #ff7a00 !important;
+main {
+  min-height: 80vh;
 }
 
-.btn-orange {
-  background-color: #ff7a00;
-  border: none;
-  color: white;
-  border-radius: 20px;
-  padding: 10px 20px;
+.card {
+  border-radius: 10px;
 }
 
-.btn-orange:hover {
-  background-color: #e76a00;
+.carousel-caption {
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
 }

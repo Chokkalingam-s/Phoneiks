@@ -1,18 +1,18 @@
-// src/App.jsx
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-import Home from "./pages/Home";
+import NavBar from "./components/Navbar.jsx";
+import Footer from "./components/Footer.jsx";
+import Home from "./pages/Home.jsx";
 
-export default function App() {
+function App() {
   return (
-    <Router>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-      </Routes>
+    <>
+      <NavBar />
+      <main>
+        <Home />
+      </main>
       <Footer />
-    </Router>
+    </>
   );
 }
+
+export default App;

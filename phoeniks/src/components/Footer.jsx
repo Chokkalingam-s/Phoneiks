@@ -1,14 +1,10 @@
-// src/components/Footer.jsx
 import React from "react";
 
 export default function Footer() {
   return (
-    <footer className="bg-dark text-light py-4">
+    <footer className="bg-light py-3 mt-4 border-top">
       <div className="container text-center">
-        <p className="mb-1">© {new Date().getFullYear()} Phoeniks — Inclusive Empowerment Portal</p>
-        <p className="small text-secondary">
-          Designed with ❤️ for Accessibility and Inclusion - Chokkalingam S & Yogesh Kannan S
-        </p>
+        <small>© {new Date().getFullYear()} Phoeniks. All rights reserved.</small>
       </div>
     </footer>
   );
