@@ -69,19 +69,28 @@ export default function Navbar() {
   onFocus={(e) => (e.target.style.borderColor = "#FF7A00")}
   onBlur={(e) => (e.target.style.borderColor = "#ccc")}
 >
-  {["en", "hi", "ta", "ml", "te"].map((code) => (
-    <option key={code} value={code}>
-      {code === "en"
-        ? "English"
-        : code === "hi"
-        ? "Hindi"
-        : code === "ta"
-        ? "Tamil"
-        : code === "ml"
-        ? "Malayalam"
-        : "Telugu"}
-    </option>
-  ))}
+{["en", "hi", "ta", "ml", "te", "bn", "mr", "gu", "ur"].map((code) => (
+  <option key={code} value={code}>
+    {code === "en"
+      ? "English"
+      : code === "hi"
+      ? "Hindi"
+      : code === "ta"
+      ? "Tamil"
+      : code === "ml"
+      ? "Malayalam"
+      : code === "te"
+      ? "Telugu"
+      : code === "bn"
+      ? "Bengali"
+      : code === "mr"
+      ? "Marathi"
+      : code === "gu"
+      ? "Gujarati"
+      : "Urdu"}
+  </option>
+))}
+
 </select>
 
         </span>
