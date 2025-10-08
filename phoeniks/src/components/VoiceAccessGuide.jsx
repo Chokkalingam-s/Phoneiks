@@ -101,23 +101,25 @@ export default function VoiceAccessGuide() {
     recog.maxAlternatives = 3; // Get multiple alternatives
     recog.lang = "en-IN";
 
-    recog.onresult = function (event) {
-      // Process all results including interim
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript.trim().toLowerCase();
-        
-        console.log("Captured:", transcript); // Debug log
-        
-        // Expanded command detection with more variations
-        const enableCmdRegex = /(enable|aawaaz|आवाज़|आवाज|saksham|सक्षम|voice|aid|guidance|chalu|चालू|karein|करें)/i;
-        
-        if (enableCmdRegex.test(transcript)) {
-          const lang = getLangCode(transcript);
-          onEnableVoice(lang);
-          break;
-        }
-      }
-    };
+recog.onresult = function (event) {
+  for (let i = event.resultIndex; i < event.results.length; i++) {
+    const transcript = event.results[i][0].transcript.trim().toLowerCase();
+
+    console.log("Captured:", transcript); // Debug log
+
+    const enableCmdRegex = /(enable|aawaaz|आवाज़|आवाज|saksham|सक्षम|voice|aid|guidance|chalu|चालू|karein|करें)/i;
+
+    if (enableCmdRegex.test(transcript)) {
+      // Immediately stop ongoing speech as command recognized
+      window.speechSynthesis.cancel();
+
+      const lang = getLangCode(transcript);
+      onEnableVoice(lang);
+      break;
+    }
+  }
+};
+
 
     recog.onaudiostart = function() {
       console.log("Audio capturing started");
