@@ -1,5 +1,6 @@
 export default {
   primary: '#FF7A00',   // Orange
+  orange: '#FFA500',
   white: '#FFFFFF',
   lightGrey: '#F8F8F8',
   text: '#333333',
