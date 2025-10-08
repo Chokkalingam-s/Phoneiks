@@ -24,7 +24,7 @@ export default function Home() {
           </div>
           <div className="col-md-6">
             <img
-              src="/src/assets/slide1.png"
+              src="/src/assets/about.png"
               alt="Phoeniks About"
               className="img-fluid rounded shadow"
             />
