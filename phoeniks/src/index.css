@@ -16,3 +16,94 @@ main {
   border-radius: 8px;
   padding: 0.5rem 1rem;
 }
+
+.splash-fade-in {
+  animation: splashFadeIn 0.8s;
+  opacity: 1;
+}
+
+.splash-fade-out {
+  animation: splashFadeOut 0.5s forwards;
+  opacity: 0;
+}
+
+@keyframes splashFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes splashFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Responsive breakpoint adjustments (optional if using Bootstrap as well) */
+@media (max-width: 480px) {
+  .splash-screen h2 {
+    font-size: 1.13rem !important;
+  }
+}
+
+.phoeniks-navbar,
+.phoeniks-navbar h1,
+.phoeniks-navbar span {
+  font-family: 'Poppins', 'Inter', 'Nunito', Arial, sans-serif;
+}
+
+.text-orange {
+  color: #FF7A00 !important;
+}
+
+.utility-bar {
+  background: #111 !important;
+  color: #fff !important;
+  font-size: 14px;
+}
+
+.sectionnav {
+  background: #FF7A00 !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px -8px #FF7A00;
+}
+
+.sectionnav .nav-link {
+  color: #fff !important;
+  transition: background 0.2s, color 0.2s;
+  border-radius: 7px;
+}
+
+.sectionnav .nav-link:hover,
+.sectionnav .nav-link:focus {
+  background: #fff3e0 !important;
+  color: #FF7A00 !important;
+}
+
+/* Responsive styles */
+@media (max-width: 600px) {
+  .mainbar {
+    flex-direction: column;
+    align-items: flex-start !important;
+    padding: 10px 6px !important;
+  }
+  .mainbar img {
+    height: 36px !important;
+    width: 36px !important;
+    margin-right: 8px !important;
+  }
+  .sectionnav .nav-link {
+    min-width: 90px !important;
+    font-size: 0.8rem !important;
+    padding: 7px 4px !important;
+  }
+  .utility-bar {
+    flex-direction: column;
+    font-size: 13px !important;
+    padding: 6px 7px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .sectionnav .nav-link {
+    min-width: 80px !important;
+    font-size: 0.8rem !important;
+  }
+}
