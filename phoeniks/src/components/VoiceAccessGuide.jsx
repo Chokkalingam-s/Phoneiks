@@ -243,13 +243,17 @@ recog.onresult = function (event) {
             >
               Enable
             </button>
-            <button
-              onClick={() => setStatus("no-guide")}
-              className="btn btn-outline-secondary mt-2 ms-2"
-              style={{ borderRadius: 16, minWidth: 110 }}
-            >
-              Not Now
-            </button>
+<button
+  onClick={() => {
+    window.speechSynthesis.cancel();
+    setStatus("no-guide");
+  }}
+  className="btn btn-outline-secondary mt-2 ms-2"
+  style={{ borderRadius: 16, minWidth: 110 }}
+>
+  Not Now
+</button>
+
           </div>
         </div>
       )}
