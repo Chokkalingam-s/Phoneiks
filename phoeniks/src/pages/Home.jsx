@@ -1,7 +1,12 @@
-import React from "react";
+import React, { useContext } from "react";
 import HomeCarousel from "../components/Carousel.jsx";
+import translations from "../HomeContentTranslations";
+import { AppContext } from "../context/AppContext.jsx";
 
 export default function Home() {
+  const { language } = useContext(AppContext);
+  const t = translations[language] || translations.en;
+
   return (
     <div>
       <HomeCarousel />
@@ -10,16 +15,12 @@ export default function Home() {
       <section className="container mt-5">
         <div className="row align-items-center">
           <div className="col-md-6">
-            <h2>About Phoeniks</h2>
-            <p>
-              Phoeniks is a comprehensive digital card service platform tailored for
-              inclusivity, security, and accessibility. Seamlessly apply, renew,
-              and access digital identification cards with ease.
-            </p>
+            <h2>{t.aboutTitle}</h2>
+            <p>{t.aboutText}</p>
             <ul>
-              <li>One-stop online registration</li>
-              <li>Secure digital documentation</li>
-              <li>User-friendly interface and assistance</li>
+              {t.aboutList.map((item, idx) => (
+                <li key={idx}>{item}</li>
+              ))}
             </ul>
           </div>
           <div className="col-md-6">
@@ -31,38 +32,19 @@ export default function Home() {
           </div>
         </div>
       </section>
+
       <section className="container mt-5">
         <div className="row text-center">
-          <div className="col-md-4 mb-4">
-            <div className="card shadow h-100">
-              <div className="card-body">
-                <h5 className="card-title">Quick Registration</h5>
-                <p className="card-text">
-                  Apply for your digital card instantly with an easy application workflow and real-time updates.
-                </p>
+          {t.features.map((feature, idx) => (
+            <div className="col-md-4 mb-4" key={idx}>
+              <div className="card shadow h-100">
+                <div className="card-body">
+                  <h5 className="card-title">{feature.title}</h5>
+                  <p className="card-text">{feature.text}</p>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="col-md-4 mb-4">
-            <div className="card shadow h-100">
-              <div className="card-body">
-                <h5 className="card-title">Status Tracking</h5>
-                <p className="card-text">
-                  Track your application status, receive notifications, and access help anytime.
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="col-md-4 mb-4">
-            <div className="card shadow h-100">
-              <div className="card-body">
-                <h5 className="card-title">Accessibility</h5>
-                <p className="card-text">
-                  Designed to be accessible for all users, including persons with disabilities.
-                </p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </section>
     </div>

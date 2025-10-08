@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import SplashScreen from "./components/SplashScreen.jsx";
 import NavBar from "./components/Navbar.jsx";
@@ -10,16 +10,24 @@ import ApplyUdidForm from "./pages/ApplyUdidForm.jsx";
 import PwdLogin from "./pages/PwdLogin.jsx";
 import PwdDashboard from "./pages/PwdDashboard.jsx";
 
-// Create a wrapper component to access location
+import { AppProvider, AppContext } from "./context/AppContext.jsx";
+
+// Wrapper to access location and AppContext
 const MainApp = () => {
   const location = useLocation();
+  const { zoom } = useContext(AppContext);
 
   // Render VoiceAccessGuide only on home page "/"
   const showVoiceGuide = location.pathname === "/";
 
+  const zoomStyle = {
+    transform: `scale(${zoom})`,
+    transformOrigin: "top left",
+    width: `${100 / zoom}%`,
+  };
+
   return (
-    <>
-      {/* Conditionally render the voice guide only on Home */}
+    <div style={zoomStyle}>
       {showVoiceGuide && <VoiceAccessGuide />}
       <NavBar />
       <main style={{ minHeight: "80vh" }}>
@@ -29,11 +37,10 @@ const MainApp = () => {
           <Route path="/apply-udid-form" element={<ApplyUdidForm />} />
           <Route path="/pwd-login" element={<PwdLogin />} />
           <Route path="/pwd-dashboard" element={<PwdDashboard />} />
-          {/* Add more routes here if needed */}
         </Routes>
       </main>
       <Footer />
-    </>
+    </div>
   );
 };
 
@@ -44,14 +51,16 @@ const App = () => {
   const handleSplashFinish = () => setLoading(false);
 
   return (
-    <>
-      {loading && <SplashScreen onFinish={handleSplashFinish} />}
-      {!loading && (
-        <BrowserRouter>
-          <MainApp />
-        </BrowserRouter>
-      )}
-    </>
+    <AppProvider>
+      <>
+        {loading && <SplashScreen onFinish={handleSplashFinish} />}
+        {!loading && (
+          <BrowserRouter>
+            <MainApp />
+          </BrowserRouter>
+        )}
+      </>
+    </AppProvider>
   );
 };
 

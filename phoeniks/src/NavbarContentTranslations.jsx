@@ -1,0 +1,99 @@
+const translations = {
+  en: {
+    screenReaderAccess: "Screen Reader Access",
+    pwdLogin: "PwD login",
+    ministryLogin: "Ministry login",
+    organisationLogin: "Organisation login",
+    ngoLogin: "NGO login",
+    links: [
+      "Apply For UDID",
+      "Track Your Application",
+      "PwD login",
+      "Aggregated-Data",
+      "Pendency-Report",
+      "Statewise-Report",
+      "Media",
+      "FAQs",
+      "Contact Us",
+    ],
+  },
+
+  hi: {
+    screenReaderAccess: "स्क्रीन रीडर पहुँच",
+    pwdLogin: "दिव्यांग लॉगिन",
+    ministryLogin: "मंत्रालय लॉगिन",
+    organisationLogin: "संगठन लॉगिन",
+    ngoLogin: "एनजीओ लॉगिन",
+    links: [
+      "यूडीआईडी के लिए आवेदन करें",
+      "अपने आवेदन को ट्रैक करें",
+      "दिव्यांग लॉगिन",
+      "संग्रहीत डेटा",
+      "विलंब रिपोर्ट",
+      "राज्यवार रिपोर्ट",
+      "मीडिया",
+      "अक्सर पूछे जाने वाले प्रश्न",
+      "संपर्क करें",
+    ],
+  },
+
+  ta: {
+    screenReaderAccess: "திரை வாசகர் அணுகல்",
+    pwdLogin: "திறன்மிக்க லாகின்",
+    ministryLogin: "அமைச்சக லாகின்",
+    organisationLogin: "அமைப்பின் லாகின்",
+    ngoLogin: "என்.ஜி.ஓ லாகின்",
+    links: [
+      "UDIDக்கு விண்ணப்பிக்கவும்",
+      "உங்கள் விண்ணப்பத்தை பின்தொடரவும்",
+      "திறனாளி லாகின்",
+      "சேர்க்கப்பட்ட தரவு",
+      "பின்வாங்கல் அறிக்கை",
+      "மாநில வாரியாக அறிக்கை",
+      "மீடியா",
+      "அடிக்கடி கேட்கப்படும் கேள்விகள்",
+      "தொடர்பு கொள்ளவும்",
+    ],
+  },
+
+  ml: {
+    screenReaderAccess: "സ്ക്രീൻ റീഡർ ആക്‌സസ്",
+    pwdLogin: "വിശേഷ കുറവുള്ളവരുടെ ലോഗിൻ",
+    ministryLogin: "മന്ത്രിത്ത്വ ലോഗിൻ",
+    organisationLogin: "സംഘടന ലോഗിൻ",
+    ngoLogin: "എൻ ജി ഒ ലോഗിൻ",
+    links: [
+      "UDID-യ്ക്ക് അപേക്ഷിക്കുക",
+      "നിങ്ങളുടെ അപേക്ഷ ട്രാക്ക് ചെയ്യുക",
+      "ദിവ്യാംഗ ലോഗിൻ",
+      "സംഘടിത ഡാറ്റ",
+      "പെൻഡൻസി റിപ്പോർട്ട്",
+      "സംസ്ഥാനവാര റിപ്പോർട്ട്",
+      "മീഡിയ",
+      "സാധാരണ ചോദ്യങ്ങൾ",
+      "സമ്പർക്കം ചെയ്യുക",
+    ],
+  },
+
+  te: {
+    screenReaderAccess: "સ્ક્રીન રીડર ઍક્સેસ",
+    pwdLogin: "పిడబ్ల్యూడి లాగిన్",
+    ministryLogin: "మంత్రిత్వ శాఖ లాగిన్",
+    organisationLogin: "సంస్థ లాగిన్",
+    ngoLogin: "ఎన్.జి.ఒ లాగిన్",
+    links: [
+      "UDID కోసం దరఖాస్తు",
+      "మీ దరఖాస్తును ట్రాక్ చేయండి",
+      "పిడబ్ల్యూడి లాగిన్",
+      "సంకలిత డేటా",
+      "పెండెన్సీ నివేదిక",
+      "రాష్ట్ర వారీ నివేదిక",
+      "మీడియా",
+      "సాధారణ ప్రశ్నలు",
+      "సంప్రదించండి",
+    ],
+  },
+};
+
+export default translations;
+ 
