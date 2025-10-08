@@ -37,6 +37,7 @@ const MainApp = () => {
       <main style={{ minHeight: "80vh" }}>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/apply-for-udid" element={<ApplyForUdid />} />
           <Route path="/apply-udid-form" element={<ApplyUdidForm />} />
           <Route path="/pwd-login" element={<PwdLogin />} />

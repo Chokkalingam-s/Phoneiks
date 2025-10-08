@@ -101,29 +101,34 @@ export default function Navbar() {
         className="mainbar py-2 px-2 px-md-4 d-flex align-items-center justify-content-between"
         style={{ background: "#fff" }}
       >
-        <div className="d-flex align-items-center">
-          <img
-            src={logo}
-            alt="Phoeniks Logo"
-            style={{ height: 56, width: 56, marginRight: 12 }}
-          />
-          <div>
-            <span
-              style={{
-                fontWeight: "bold",
-                fontSize: "2rem",
-                fontFamily: "Poppins, Inter, Nunito, Arial, sans-serif",
-                color: "#FF7A00",
-              }}
-            >
-              Phoeniks
-            </span>
-            <br />
-            <span style={{ fontSize: 15, color: "#333" }}>
-              Empowering Every Ability
-            </span>
+        <a
+          href="/home"
+          style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
+        >
+          <div className="d-flex align-items-center">
+            <img
+              src={logo}
+              alt="Phoeniks Logo"
+              style={{ height: 56, width: 56, marginRight: 12 }}
+            />
+            <div>
+              <span
+                style={{
+                  fontWeight: "bold",
+                  fontSize: "2rem",
+                  fontFamily: "Poppins, Inter, Nunito, Arial, sans-serif",
+                  color: "#FF7A00",
+                }}
+              >
+                Phoeniks
+              </span>
+              <br />
+              <span style={{ fontSize: 15, color: "#333" }}>
+                Empowering Every Ability
+              </span>
+            </div>
           </div>
-        </div>
+        </a>
         <div className="d-flex align-items-center">
           <a
             href="/pwd-login"
