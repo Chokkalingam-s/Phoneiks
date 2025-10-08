@@ -50,33 +50,40 @@ export default function Navbar() {
             T-
           </button>{" "}
           ● ○{" "}
-          <select
-            aria-label="Select Language"
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "#fff",
-              cursor: "pointer",
-              fontWeight: "bold",
-            }}
-          >
-{["en", "hi", "ta", "ml", "te"].map((code) => (
-  <option key={code} value={code}>
-    {code === "en"
-      ? "English"
-      : code === "hi"
-      ? "Hindi"
-      : code === "ta"
-      ? "Tamil"
-      : code === "ml"
-      ? "Malayalam"
-      : "Telugu"}
-  </option>
-))}
+<select
+  aria-label="Select Language"
+  value={language}
+  onChange={(e) => setLanguage(e.target.value)}
+  style={{
+    backgroundColor: "#fff",
+    border: "1px solid #ccc",
+    borderRadius: "4px",
+    color: "#333",
+    cursor: "pointer",
+    fontWeight: "bold",
+    padding: "6px 12px",
+    fontSize: "1rem",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+    transition: "border-color 0.3s ease",
+  }}
+  onFocus={(e) => (e.target.style.borderColor = "#FF7A00")}
+  onBlur={(e) => (e.target.style.borderColor = "#ccc")}
+>
+  {["en", "hi", "ta", "ml", "te"].map((code) => (
+    <option key={code} value={code}>
+      {code === "en"
+        ? "English"
+        : code === "hi"
+        ? "Hindi"
+        : code === "ta"
+        ? "Tamil"
+        : code === "ml"
+        ? "Malayalam"
+        : "Telugu"}
+    </option>
+  ))}
+</select>
 
-          </select>
         </span>
       </div>
 
