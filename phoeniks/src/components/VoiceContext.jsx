@@ -22,12 +22,8 @@ const messages = {
 
 function speak(msg, lang = "en-IN") {
   return new Promise((resolve) => {
-    console.log("🔊 [SPEAK] Starting speech for:", msg.substring(0, 50));
-    
-    // Force cancel any ongoing speech
     window.speechSynthesis.cancel();
     
-    // Wait for cancel to complete, then speak
     setTimeout(() => {
       const utter = new window.SpeechSynthesisUtterance(msg);
       utter.lang = lang;
@@ -36,28 +32,21 @@ function speak(msg, lang = "en-IN") {
       utter.volume = 1.0;
       
       utter.onstart = () => {
-        console.log("🔊 [SPEAK] ✅ Audio STARTED");
+        console.log("🔊 Audio STARTED:", msg.substring(0, 40));
       };
       
       utter.onend = () => {
-        console.log("🔊 [SPEAK] ✅ Audio ENDED");
-        setTimeout(resolve, 100);
+        console.log("🔊 Audio ENDED");
+        setTimeout(resolve, 200);
       };
       
       utter.onerror = (e) => {
-        console.error("🔊 [SPEAK] ❌ ERROR:", e.error);
-        setTimeout(resolve, 100);
+        console.error("🔊 Audio ERROR:", e.error);
+        resolve();
       };
       
-      console.log("🔊 [SPEAK] Calling speechSynthesis.speak()");
       window.speechSynthesis.speak(utter);
-      
-      // Verify it's queued
-      setTimeout(() => {
-        console.log("🔊 [SPEAK] Speaking:", window.speechSynthesis.speaking);
-        console.log("🔊 [SPEAK] Pending:", window.speechSynthesis.pending);
-      }, 100);
-    }, 200);
+    }, 100);
   });
 }
 
@@ -79,11 +68,11 @@ export function VoiceProvider({ children }) {
   const recognitionRef = useRef(null);
   const restartTimeoutRef = useRef(null);
   const isSpeakingRef = useRef(false);
-  const isStoppingRef = useRef(false);
+  const actionCallbackRef = useRef(null);
 
   useEffect(() => {
-    if (voiceEnabled && !recognitionRef.current && !isSpeakingRef.current) {
-      console.log("🎙️ [CONTEXT] Starting recognition from context");
+    if (voiceEnabled && !recognitionRef.current) {
+      console.log("🎙️ Starting recognition from context");
       startRecognition();
     }
 
@@ -101,62 +90,47 @@ export function VoiceProvider({ children }) {
 
   useEffect(() => {
     if (voiceEnabled) {
-      console.log("📍 [ROUTE] Changed to:", location.pathname);
+      console.log("📍 Route changed to:", location.pathname);
     }
   }, [location.pathname, voiceEnabled]);
 
-  async function stopRecognitionForSpeech() {
-    if (isStoppingRef.current) {
-      console.log("⚠️ [STOP] Already stopping, waiting...");
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return;
-    }
+  function stopRecognitionCompletely() {
+    console.log("🛑 Stopping recognition");
     
-    isStoppingRef.current = true;
-    console.log("🛑 [STOP] Stopping recognition for speech");
-    
-    // Clear any restart timeouts
     if (restartTimeoutRef.current) {
       clearTimeout(restartTimeoutRef.current);
       restartTimeoutRef.current = null;
     }
     
-    // Stop recognition
     if (recognitionRef.current) {
       try {
         recognitionRef.current.abort();
         recognitionRef.current.stop();
-        console.log("🛑 [STOP] Recognition stopped");
       } catch (e) {
-        console.error("🛑 [STOP] Error:", e);
+        console.error("Stop error:", e);
       }
       recognitionRef.current = null;
     }
     
-    // Wait for recognition to fully stop
-    await new Promise(resolve => setTimeout(resolve, 500));
-    console.log("🛑 [STOP] Complete");
-    isStoppingRef.current = false;
+    return new Promise(resolve => setTimeout(resolve, 300));
   }
 
   function startRecognition() {
     if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
-      console.log("❌ [START] Speech recognition not supported");
+      console.log("❌ Speech recognition not supported");
       return;
     }
 
     if (recognitionRef.current) {
-      console.log("⚠️ [START] Recognition already running");
+      console.log("⚠️ Recognition already running");
       return;
     }
 
     if (isSpeakingRef.current) {
-      console.log("⚠️ [START] Currently speaking, delaying start");
+      console.log("⚠️ Currently speaking");
       return;
     }
 
-    console.log("▶️ [START] Starting new recognition");
-    
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     const recog = new SpeechRecognition();
@@ -166,13 +140,9 @@ export function VoiceProvider({ children }) {
     recog.maxAlternatives = 3;
     recog.lang = chosenLangRef.current === "hi" ? "hi-IN" : "en-IN";
 
-    recog.onstart = () => {
-      console.log("▶️ [START] Recognition ACTIVE");
-    };
-
     recog.onresult = function (event) {
       if (isSpeakingRef.current) {
-        console.log("⏸️ [RESULT] Speaking in progress, ignoring");
+        console.log("⏸️ Speaking, ignoring input");
         return;
       }
 
@@ -180,15 +150,24 @@ export function VoiceProvider({ children }) {
         if (!event.results[i].isFinal) continue;
 
         const transcript = event.results[i][0].transcript.trim().toLowerCase();
-        console.log("🎤 [RESULT] Captured:", transcript);
+        console.log("🎤 Captured:", transcript);
 
         // Enable voice aid command
         if (!voiceEnabledRef.current) {
           const enableCmdRegex = /(enable|voice|aid|guidance|aawaaz|आवाज़|आवाज|saksham|सक्षम|chalu|चालू|karein|करें)/i;
 
           if (enableCmdRegex.test(transcript)) {
-            console.log("🔊 [RESULT] Triggering enableVoice");
+            console.log("🔊 Enabling voice aid...");
             enableVoice(getLangCode(transcript));
+            return;
+          }
+        }
+
+        // Check for page-specific action callbacks first
+        if (voiceEnabledRef.current && actionCallbackRef.current) {
+          const handled = actionCallbackRef.current(transcript);
+          if (handled) {
+            console.log("✅ Action handled by page callback");
             return;
           }
         }
@@ -197,21 +176,21 @@ export function VoiceProvider({ children }) {
         if (voiceEnabledRef.current) {
           // Home navigation
           if (/home|होम|go home|go to home/i.test(transcript)) {
-            console.log("🏠 [RESULT] Triggering HOME navigation");
+            console.log("🏠 HOME command");
             handleNavigation("/home", "home");
             return;
           }
 
           // Login navigation
           if (/login|लॉगिन|log in|go to login/i.test(transcript)) {
-            console.log("🔐 [RESULT] Triggering LOGIN navigation");
+            console.log("🔐 LOGIN command");
             handleNavigation("/pwd-login", "login");
             return;
           }
 
           // Apply UDID navigation
           if (/apply|यूडीआईडी|udid|apply udid|apply for udid/i.test(transcript)) {
-            console.log("📝 [RESULT] Triggering APPLY navigation");
+            console.log("📝 APPLY command");
             handleNavigation("/apply-for-udid", "apply");
             return;
           }
@@ -220,7 +199,7 @@ export function VoiceProvider({ children }) {
     };
 
     recog.onerror = function (e) {
-      console.log("❌ [ERROR] Recognition error:", e.error);
+      console.log("❌ Recognition error:", e.error);
 
       if (e.error === "aborted" || e.error === "no-speech") {
         return;
@@ -229,7 +208,6 @@ export function VoiceProvider({ children }) {
       if (voiceEnabledRef.current && !isSpeakingRef.current) {
         restartTimeoutRef.current = setTimeout(() => {
           if (!recognitionRef.current && !isSpeakingRef.current) {
-            console.log("🔄 [ERROR] Restarting after error");
             startRecognition();
           }
         }, 1000);
@@ -237,13 +215,12 @@ export function VoiceProvider({ children }) {
     };
 
     recog.onend = function () {
-      console.log("⏹️ [END] Recognition ended");
+      console.log("⏹️ Recognition ended");
       recognitionRef.current = null;
 
-      if (voiceEnabledRef.current && !isSpeakingRef.current && !isStoppingRef.current) {
+      if (voiceEnabledRef.current && !isSpeakingRef.current) {
         restartTimeoutRef.current = setTimeout(() => {
           if (!recognitionRef.current && !isSpeakingRef.current) {
-            console.log("🔄 [END] Auto-restarting");
             startRecognition();
           }
         }, 500);
@@ -253,64 +230,62 @@ export function VoiceProvider({ children }) {
     try {
       recog.start();
       recognitionRef.current = recog;
-      console.log("▶️ [START] Recognition object created and started");
+      console.log("▶️ Recognition started");
     } catch (err) {
-      console.log("❌ [START] Error:", err);
+      console.log("❌ Start error:", err);
     }
   }
 
   async function handleNavigation(path, pageName) {
-    console.log(`\n🚀 [NAV] ===== NAVIGATION TO ${pageName.toUpperCase()} STARTED =====`);
+    console.log(`\n🚀 Navigation to ${pageName.toUpperCase()}`);
     
-    // Set speaking flag FIRST
+    // STOP recognition first
     isSpeakingRef.current = true;
+    await stopRecognitionCompletely();
     
-    // Stop recognition and wait
-    await stopRecognitionForSpeech();
+    // Build message
+    const navMessages = {
+      home: { en: "Navigating to home page", hi: "होम पेज पर जा रहे हैं" },
+      login: { en: "Navigating to login page", hi: "लॉगिन पेज पर जा रहे हैं" },
+      apply: { en: "Navigating to apply page", hi: "अप्लाई पेज पर जा रहे हैं" }
+    };
     
-    console.log(`🔊 [NAV] Preparing speech for ${pageName}`);
-
-    const msg =
-      chosenLangRef.current === "hi"
-        ? `${pageName === "home" ? "होम" : pageName === "login" ? "लॉगिन" : "अप्लाई"} पेज पर जा रहे हैं`
-        : `Navigating to ${pageName} page`;
-
-    console.log(`🔊 [NAV] Message: "${msg}"`);
+    const msg = navMessages[pageName][chosenLangRef.current];
+    const lang = chosenLangRef.current === "hi" ? "hi-IN" : "en-IN";
     
-    // Speak and wait for completion
-    await speak(msg, chosenLangRef.current === "hi" ? "hi-IN" : "en-IN");
+    console.log(`🔊 Speaking: "${msg}"`);
     
-    console.log(`✅ [NAV] Speech completed for ${pageName}`);
-    console.log(`🔀 [NAV] Navigating to ${path}`);
+    // Speak and wait for it to finish
+    await speak(msg, lang);
     
+    console.log("✅ Speech done");
+    
+    // Wait a bit more before navigation
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Now navigate
+    console.log(`🔀 Navigating to ${path}`);
     navigate(path);
     
-    // Clear speaking flag
     isSpeakingRef.current = false;
     
-    // Resume recognition with delay
-    console.log(`▶️ [NAV] Scheduling recognition restart in 1.5s`);
+    // Restart recognition after navigation
     setTimeout(() => {
       if (voiceEnabledRef.current && !isSpeakingRef.current) {
-        console.log("▶️ [NAV] Resuming recognition after navigation");
+        console.log("▶️ Resuming recognition");
         startRecognition();
       }
-    }, 1500);
-    
-    console.log(`🚀 [NAV] ===== NAVIGATION TO ${pageName.toUpperCase()} COMPLETE =====\n`);
+    }, 1000);
   }
 
   async function enableVoice(lang = "en") {
     if (voiceEnabledRef.current) return;
 
-    console.log("\n✅ [ENABLE] ===== ENABLING VOICE =====");
-    console.log("✅ [ENABLE] Language:", lang);
+    console.log("✅ ENABLING VOICE:", lang);
 
-    // Set speaking flag FIRST
+    // Stop recognition
     isSpeakingRef.current = true;
-    
-    // Stop recognition and wait
-    await stopRecognitionForSpeech();
+    await stopRecognitionCompletely();
 
     setVoiceEnabled(true);
     voiceEnabledRef.current = true;
@@ -318,36 +293,54 @@ export function VoiceProvider({ children }) {
     setChosenLang(lang);
     chosenLangRef.current = lang;
 
-    console.log("🔊 [ENABLE] Preparing enabled message");
+    console.log("🔊 Speaking enabled message");
     
-    // Speak the enabled message
+    // Speak enabled message
     await speak(messages[lang].enabled, lang + "-IN");
     
-    console.log("✅ [ENABLE] Speech completed");
-    
-    // Clear speaking flag
+    console.log("✅ Enable speech complete");
     isSpeakingRef.current = false;
 
-    // Start recognition with delay
-    console.log("▶️ [ENABLE] Scheduling recognition start in 1.5s");
+    // Start recognition
     setTimeout(() => {
       if (voiceEnabledRef.current && !isSpeakingRef.current) {
-        console.log("🔄 [ENABLE] Starting recognition");
+        console.log("▶️ Starting recognition");
         startRecognition();
       }
-    }, 1500);
-    
-    console.log("✅ [ENABLE] ===== VOICE ENABLED =====\n");
+    }, 1000);
   }
 
   function disableVoice() {
-    console.log("🔇 [DISABLE] Disabling voice");
+    console.log("🔇 Disabling voice");
 
     setVoiceEnabled(false);
     voiceEnabledRef.current = false;
 
-    stopRecognitionForSpeech();
+    stopRecognitionCompletely();
     window.speechSynthesis.cancel();
+  }
+
+  async function speakText(msg) {
+    isSpeakingRef.current = true;
+    await stopRecognitionCompletely();
+    await speak(msg, chosenLangRef.current === "hi" ? "hi-IN" : "en-IN");
+    isSpeakingRef.current = false;
+    
+    setTimeout(() => {
+      if (voiceEnabledRef.current && !isSpeakingRef.current) {
+        startRecognition();
+      }
+    }, 1000);
+  }
+
+  function registerActionCallback(callback) {
+    actionCallbackRef.current = callback;
+    console.log("✅ Action callback registered");
+  }
+
+  function unregisterActionCallback() {
+    actionCallbackRef.current = null;
+    console.log("❌ Action callback unregistered");
   }
 
   const value = {
@@ -355,18 +348,9 @@ export function VoiceProvider({ children }) {
     chosenLang,
     enableVoice,
     disableVoice,
-    speak: async (msg) => {
-      isSpeakingRef.current = true;
-      await stopRecognitionForSpeech();
-      await speak(msg, chosenLangRef.current === "hi" ? "hi-IN" : "en-IN");
-      isSpeakingRef.current = false;
-      
-      setTimeout(() => {
-        if (voiceEnabledRef.current && !isSpeakingRef.current) {
-          startRecognition();
-        }
-      }, 1500);
-    },
+    speak: speakText,
+    registerActionCallback,
+    unregisterActionCallback,
   };
 
   return <VoiceContext.Provider value={value}>{children}</VoiceContext.Provider>;
