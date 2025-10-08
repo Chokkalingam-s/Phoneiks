@@ -1,6 +1,6 @@
 import React from "react";
 import logo from "../assets/logo.png";
-import { FaHome, FaUserCircle, FaUsers, FaSearch } from "react-icons/fa";
+import { FaHome, FaUserCircle, FaUsers, FaSearch, FaBuilding, FaSchool, FaPeace } from "react-icons/fa";
 
 const mainLinks = [
   { text: "Apply For UDID", icon: <FaHome />, href: "/apply-for-udid" },
@@ -45,8 +45,14 @@ export default function Navbar() {
           <a href="/pwd-login" className="btn btn-link text-decoration-none text-orange d-flex align-items-center me-2">
             <FaUserCircle /><span className="ms-1">PwD login</span>
           </a>
-          <a href="#" className="btn btn-link text-decoration-none text-orange d-flex align-items-center">
-            <FaUsers /><span className="ms-1">Department User Login</span>
+          <a href="/ministry-login" className="btn btn-link text-decoration-none text-orange d-flex align-items-center me-2">
+            <FaBuilding /><span className="ms-1">Ministry login</span>
+          </a>
+          <a href="/organisation-login" className="btn btn-link text-decoration-none text-orange d-flex align-items-center">
+            <FaSchool /><span className="ms-1">Organisation login</span>
+          </a>
+          <a href="/ngo-login" className="btn btn-link text-decoration-none text-orange d-flex align-items-center">
+            <FaPeace /><span className="ms-1">NGO login</span>
           </a>
           <span className="d-none d-md-flex align-items-center ms-3">
             <FaSearch size={24} color="#333" />

@@ -2,7 +2,7 @@ import React from "react";
 import { Carousel } from "react-bootstrap";
 import slide1 from "../assets/slide1.jpg";
 import slide2 from "../assets/slide3.png";
-import slide3 from "../assets/StudentsGrp.jpeg";
+import slide3 from "../assets/old1.jpeg";
 
 const HomeCarousel = () => (
   <Carousel>
