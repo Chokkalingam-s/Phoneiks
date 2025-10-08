@@ -3,9 +3,9 @@ import logo from "../assets/logo.png";
 import { FaHome, FaUserCircle, FaUsers, FaSearch } from "react-icons/fa";
 
 const mainLinks = [
-  { text: "Apply For UDID", icon: <FaHome />, href: "#" },
+  { text: "Apply For UDID", icon: <FaHome />, href: "/apply-for-udid" },
   { text: "Track Your Application", href: "#" },
-  { text: "PwD login", href: "#" },
+  { text: "PwD login", href: "/pwd-login"},
   { text: "Aggregated-Data", href: "#" },
   { text: "Pendency-Report", href: "#" },
   { text: "Statewise-Report", href: "#" },
