@@ -10,44 +10,42 @@ export default function ApplyForUdid() {
 
   const pageContent = {
     en: {
-      title: "Apply for UDID",
-      description: "UDID stands for Unique Disability Identity Card. It is a document issued to Persons with Disabilities in India. The UDID card serves as a single document for identification and verification of disabilities across the country.",
-      benefits: "Benefits include access to various government schemes, reservations in education and employment, and easy portability of disability certificate across India.",
-      instruction: "Say proceed command or click Proceed to registration button to continue.",
+      text: "Welcome to UDID application page. UDID stands for Unique Disability Identity Card. It is a document issued to Persons with Disabilities in India. The UDID card serves as a single document for identification and verification of disabilities across the country. Benefits include access to various government schemes, reservations in education and employment, and easy portability of disability certificate across India. Say proceed to continue to the registration form.",
     },
     hi: {
-      title: "यूडीआईडी के लिए आवेदन करें",
-      description: "यूडीआईडी का मतलब यूनिक डिसेबिलिटी आइडेंटिटी कार्ड है। यह भारत में दिव्यांग व्यक्तियों को जारी किया जाने वाला दस्तावेज है। यूडीआईडी कार्ड पूरे देश में विकलांगता की पहचान और सत्यापन के लिए एकल दस्तावेज के रूप में कार्य करता है।",
-      benefits: "लाभों में विभिन्न सरकारी योजनाओं तक पहुंच, शिक्षा और रोजगार में आरक्षण, और भारत भर में विकलांगता प्रमाणपत्र की आसान पोर्टेबिलिटी शामिल है।",
-      instruction: "जारी रखने के लिए आगे बढ़ें कमांड कहें या पंजीकरण के लिए आगे बढ़ें बटन पर क्लिक करें।",
+      text: "यूडीआईडी आवेदन पृष्ठ पर आपका स्वागत है। यूडीआईडी का मतलब यूनिक डिसेबिलिटी आइडेंटिटी कार्ड है। यह भारत में दिव्यांग व्यक्तियों को जारी किया जाने वाला दस्तावेज है। यूडीआईडी कार्ड पूरे देश में विकलांगता की पहचान और सत्यापन के लिए एकल दस्तावेज के रूप में कार्य करता है। लाभों में विभिन्न सरकारी योजनाओं तक पहुंच, शिक्षा और रोजगार में आरक्षण, और भारत भर में विकलांगता प्रमाणपत्र की आसान पोर्टेबिलिटी शामिल है। पंजीकरण फॉर्म पर जाने के लिए आगे बढ़ें कहें।",
     },
   };
 
   useEffect(() => {
-    // Read page content aloud when page loads and voice is enabled
-    if (voiceEnabled && !hasReadContent.current) {
-      hasReadContent.current = true;
-      readPageContent();
-    }
-
     // Register voice command callback for "proceed"
     if (voiceEnabled) {
       registerActionCallback(handleVoiceCommand);
+      
+      // Read page content after a delay to ensure navigation audio is complete
+      if (!hasReadContent.current) {
+        hasReadContent.current = true;
+        const delay = setTimeout(() => {
+          readPageContent();
+        }, 1500); // Wait 1.5 seconds after page load
+        
+        return () => clearTimeout(delay);
+      }
     }
 
     // Cleanup
     return () => {
       unregisterActionCallback();
     };
-  }, [voiceEnabled, chosenLang]);
+  }, [voiceEnabled]);
 
   async function readPageContent() {
+    if (!voiceEnabled) return;
+    
     console.log("📖 Reading page content aloud");
     const content = pageContent[chosenLang];
     
-    const fullText = `${content.title}. ${content.description} ${content.benefits} ${content.instruction}`;
-    
-    await speak(fullText);
+    await speak(content.text);
     console.log("✅ Page content reading complete");
   }
 
@@ -73,7 +71,7 @@ export default function ApplyForUdid() {
     
     await speak(msg);
     
-    // Click the button or navigate
+    // Navigate to form
     setTimeout(() => {
       navigate("/apply-udid-form");
     }, 500);
@@ -86,20 +84,37 @@ export default function ApplyForUdid() {
           <div className="card shadow-lg">
             <div className="card-body p-5">
               <h1 className="text-center mb-4" style={{ color: "#FF7A00" }}>
-                {pageContent[chosenLang].title}
+                {chosenLang === "hi" ? "यूडीआईडी के लिए आवेदन करें" : "Apply for UDID"}
               </h1>
               
               <div className="main-content mb-4">
-                <h3 className="mb-3">What is UDID?</h3>
-                <p className="lead">{pageContent[chosenLang].description}</p>
+                <h3 className="mb-3">
+                  {chosenLang === "hi" ? "यूडीआईडी क्या है?" : "What is UDID?"}
+                </h3>
+                <p className="lead">
+                  {chosenLang === "hi" 
+                    ? "यूडीआईडी का मतलब यूनिक डिसेबिलिटी आइडेंटिटी कार्ड है। यह भारत में दिव्यांग व्यक्तियों को जारी किया जाने वाला दस्तावेज है। यूडीआईडी कार्ड पूरे देश में विकलांगता की पहचान और सत्यापन के लिए एकल दस्तावेज के रूप में कार्य करता है।"
+                    : "UDID stands for Unique Disability Identity Card. It is a document issued to Persons with Disabilities in India. The UDID card serves as a single document for identification and verification of disabilities across the country."
+                  }
+                </p>
                 
-                <h3 className="mb-3 mt-4">Benefits</h3>
-                <p className="lead">{pageContent[chosenLang].benefits}</p>
+                <h3 className="mb-3 mt-4">
+                  {chosenLang === "hi" ? "लाभ" : "Benefits"}
+                </h3>
+                <p className="lead">
+                  {chosenLang === "hi"
+                    ? "लाभों में विभिन्न सरकारी योजनाओं तक पहुंच, शिक्षा और रोजगार में आरक्षण, और भारत भर में विकलांगता प्रमाणपत्र की आसान पोर्टेबिलिटी शामिल है।"
+                    : "Benefits include access to various government schemes, reservations in education and employment, and easy portability of disability certificate across India."
+                  }
+                </p>
               </div>
 
               <div className="alert alert-info" role="alert">
                 <i className="bi bi-info-circle me-2"></i>
-                {pageContent[chosenLang].instruction}
+                {chosenLang === "hi" 
+                  ? "जारी रखने के लिए 'आगे बढ़ें' कहें या नीचे दिए गए बटन पर क्लिक करें।"
+                  : "Say 'proceed' or click the button below to continue."
+                }
               </div>
 
               <div className="text-center mt-4">
