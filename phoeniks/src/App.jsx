@@ -9,6 +9,10 @@ import ApplyForUdid from "./pages/ApplyForUdid.jsx";
 import ApplyUdidForm from "./pages/ApplyUdidForm.jsx";
 import PwdLogin from "./pages/PwdLogin.jsx";
 import PwdDashboard from "./pages/PwdDashboard.jsx";
+import OrganisationLogin from "./pages/OrganisationLogin";
+import OrganisationDashboard from "./pages/OrganisationDashboard";
+import OrganisationContentUpload from "./pages/OrganisationContentUpload";
+
 
 import { AppProvider, AppContext } from "./context/AppContext.jsx";
 
@@ -37,6 +41,9 @@ const MainApp = () => {
           <Route path="/apply-udid-form" element={<ApplyUdidForm />} />
           <Route path="/pwd-login" element={<PwdLogin />} />
           <Route path="/pwd-dashboard" element={<PwdDashboard />} />
+          <Route path="/organisation-login" element={<OrganisationLogin />} />
+          <Route path="/org-dashboard" element={<OrganisationDashboard />} />
+          <Route path="/organisation-forum" element={<OrganisationContentUpload />} />
         </Routes>
       </main>
       <Footer />
