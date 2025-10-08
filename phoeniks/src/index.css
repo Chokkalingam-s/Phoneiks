@@ -149,3 +149,8 @@ main {
 @media (max-width:500px){
   .guide-box { max-width:94vw; padding:22px 4vw 18px;}
 }
+.carousel-img {
+  height: 500px; /* or the exact height of your second slide */
+  object-fit: cover;
+  width: 100%;
+}
