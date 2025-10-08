@@ -2,37 +2,35 @@ import React, { useEffect, useState, useRef } from "react";
 
 const messages = {
   en: {
-    welcome: "Welcome to Phoeniks.",
-    guidance: "Do you want voice guidance? Say 'Enable Voice Aid' or click Enable.",
-    enabled: "Voice guidance activated. This website is developed for specially abled individuals across India. Apply UDID if not registered yet.",
-    selectLang: "Please select your preferred language for voice guidance."
+    combined:
+      "Welcome to Phoeniks. For voice Guidance Say 'Enable Voice aid' or click 'Enable button'.",
+    enabled:
+      "Voice guidance activated. This website is developed for specially abled individuals across India. Apply UDID if not registered yet.",
+    selectLang: "Please select your preferred language for voice guidance.",
   },
   hi: {
-    welcome: "फ़ॉनिक्स में आपका स्वागत है।",
-    guidance: "क्या आप वॉइस गाइडेंस चाहते हैं? 'आवाज़ सक्षम करें' बोलें या Enable क्लिक करें।",
-    enabled: "वॉइस गाइडेंस सक्रिय कर दी गई है। यह वेबसाइट भारत भर के दिव्यांग व्यक्तियों के लिए विकसित की गई है। यदि अभी तक पंजीकरण नहीं किया है तो यूडीआईडी के लिए आवेदन करें।",
-    selectLang: "कृपया अपनी पसंदीदा भाषा चुनें।"
+    combined:
+      "फीनिक्स में आपका स्वागत है। वॉइस गाइड के लिए कहें 'आवाज़ सक्षम करें' या 'सक्रिय करें' बटन दबाएं।",
+    enabled:
+      "वॉइस गाइडेंस सक्रिय कर दी गई है। यह वेबसाइट भारत भर के दिव्यांग व्यक्तियों के लिए विकसित की गई है। यदि अभी तक पंजीकरण नहीं किया है तो यूडीआईडी के लिए आवेदन करें।",
+    selectLang: "कृपया अपनी पसंदीदा भाषा चुनें।",
   },
-  ta: {
-    welcome: "ஃபோனிக்ஸுக்கு வரவேற்கின்றோம்.",
-    guidance: "குரல் வழிகாட்டுதலை விரும்புகிறீர்களா? 'குரலை இயக்கவும்' என்று சொல்லவும் அல்லது Enable-ஐ கிளிக் செய்யவும்.",
-    enabled: "குரல் வழிகாட்டுதல் செயல்படுத்தப்பட்டது. இந்த இணையதளம் இந்தியாவிலுள்ள சிறப்பு தேவைகள் மற்றும் மாற்றுத் திறனாளிகள் కోసం உருவாக்கப்பட்டுள்ளது. இன்னும் பதிவு செய்யவில்லை என்றால் UDID-க்கு விண்ணப்பியுங்கள்.",
-    selectLang: "தயவு செய்து உங்கள் விருப்ப மொழியைத் தேர்ந்தெடுக்கவும்."
-  }
 };
 
-function speak(msg, lang="en-IN", cb) {
+function speak(msg, lang = "en-IN", cb) {
+  window.speechSynthesis.cancel();
   const utter = new window.SpeechSynthesisUtterance(msg);
   utter.lang = lang;
-  utter.rate = 1;
-  utter.pitch = 1.1;
+  utter.rate = 0.9; // Slightly slower for clarity
+  utter.pitch = 1.0;
+  utter.volume = 1.0;
   utter.onend = cb;
   window.speechSynthesis.speak(utter);
 }
 
 function getLangCode(s) {
-  if (/kural|iyakkavum|குரலை/.test(s.toLowerCase())) return "ta";
-  if (/aawaaz|saksham|आवाज़/.test(s.toLowerCase())) return "hi";
+  s = s.toLowerCase();
+  if (/aawaaz|saksham|आवाज़|आवाज|hindi/.test(s)) return "hi";
   return "en";
 }
 
@@ -41,115 +39,215 @@ export default function VoiceAccessGuide() {
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [showLangChoice, setShowLangChoice] = useState(false);
   const [chosenLang, setChosenLang] = useState("en");
-  const [status, setStatus] = useState("init");
+  const [status, setStatus] = useState("ask-guidance");
   const recognitionRef = useRef(null);
+  const restartTimeoutRef = useRef(null);
 
-  // Ask for microphone access on mount
   useEffect(() => {
     if (permissionAsked) return;
+    
     if (navigator.mediaDevices && window.SpeechSynthesis) {
-      navigator.mediaDevices.getUserMedia({ audio: true }).then(() => {
-        setPermissionAsked(true);
-        sequenceWelcome();
-      }).catch(() => {
-        setPermissionAsked(true);
-        sequenceWelcome();
-      });
+      navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then(() => {
+          setPermissionAsked(true);
+          sequenceWelcome();
+        })
+        .catch(() => {
+          setPermissionAsked(true);
+          sequenceWelcome();
+        });
     } else {
       setPermissionAsked(true);
       sequenceWelcome();
     }
+    
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
+      }
+      if (restartTimeoutRef.current) clearTimeout(restartTimeoutRef.current);
+      window.speechSynthesis.cancel();
+    };
     // eslint-disable-next-line
   }, []);
-  
-  // Welcome in all three languages, then ask guidance
+
   function sequenceWelcome() {
-    setStatus("welcoming");
-    speak(messages.en.welcome, "en-IN", ()=>{
-      speak(messages.hi.welcome, "hi-IN", ()=>{
-        speak(messages.ta.welcome, "ta-IN", ()=>{
-          askVoiceGuidance();
-        });
+    // Speak welcome messages while showing "Enable Voice Guidance?" overlay
+    speak(messages.en.combined, "en-IN", () => {
+      speak(messages.hi.combined, "hi-IN", () => {
+        startRecognition();
       });
     });
   }
-  // Prompt for guide via voice and show buttons
-  function askVoiceGuidance() {
-    setStatus("ask-guidance");
-    speak(messages.en.guidance, "en-IN");
-    startRecognition();
-  }
 
-  // Start SpeechRecognition API
   function startRecognition() {
-    if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) return;
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window))
+      return;
+      
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
     const recog = new SpeechRecognition();
-    recog.continuous = false;
-    recog.interimResults = false;
+    
+    // Improved recognition settings
+    recog.continuous = true;
+    recog.interimResults = true; // Changed to true for better capture
+    recog.maxAlternatives = 3; // Get multiple alternatives
     recog.lang = "en-IN";
+
     recog.onresult = function (event) {
-      const transcript = event.results[0][0].transcript;
-      if (/(enable voice aid|आवाज़ सक्षम करें|aawaaz saksham karein|குரலை இயக்கவும்|kuralai iyakkavum)/i.test(transcript)) {
-        // Determine lang from voice
-        const lang = getLangCode(transcript);
-        onEnableVoice(lang);
+      // Process all results including interim
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript.trim().toLowerCase();
+        
+        console.log("Captured:", transcript); // Debug log
+        
+        // Expanded command detection with more variations
+        const enableCmdRegex = /(enable|aawaaz|आवाज़|आवाज|saksham|सक्षम|voice|aid|guidance|chalu|चालू|karein|करें)/i;
+        
+        if (enableCmdRegex.test(transcript)) {
+          const lang = getLangCode(transcript);
+          onEnableVoice(lang);
+          break;
+        }
       }
     };
-    recog.onend = () => { if (!voiceEnabled && status==="ask-guidance") recog.start(); }
-    recog.onerror = () => {};
-    recog.start();
-    recognitionRef.current = recog;
+
+    recog.onaudiostart = function() {
+      console.log("Audio capturing started");
+    };
+
+    recog.onsoundstart = function() {
+      console.log("Sound detected");
+    };
+
+    recog.onspeechstart = function() {
+      console.log("Speech detected");
+    };
+
+    recog.onerror = function (e) {
+      console.log("Recognition error:", e.error);
+      
+      // Handle different error types
+      if (e.error === "no-speech") {
+        console.log("No speech detected, restarting...");
+      }
+      
+      if (!voiceEnabled && status === "ask-guidance") {
+        restartTimeoutRef.current = setTimeout(() => {
+          try {
+            recog.start();
+          } catch (err) {
+            console.log("Restart error:", err);
+          }
+        }, 1000);
+      }
+    };
+
+    recog.onend = function () {
+      console.log("Recognition ended");
+      if (!voiceEnabled && status === "ask-guidance") {
+        restartTimeoutRef.current = setTimeout(() => {
+          try {
+            recog.start();
+          } catch (err) {
+            console.log("Restart error:", err);
+          }
+        }, 500);
+      }
+    };
+
+    try {
+      recog.start();
+      recognitionRef.current = recog;
+      console.log("Recognition started");
+    } catch (err) {
+      console.log("Start error:", err);
+    }
   }
 
-  // User enables guidance
-  function onEnableVoice(lang="en") {
+  function onEnableVoice(lang = "en") {
+    if (voiceEnabled) return;
+    
     setVoiceEnabled(true);
     setChosenLang(lang);
-    if (recognitionRef.current) recognitionRef.current.stop();
     setStatus("enabled-announce");
-    setTimeout(() => {
-      speak(messages[lang].enabled, lang+"-IN");
+
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+
+    window.speechSynthesis.cancel();
+    
+    // Speak enabled message WITHOUT showing overlay
+    speak(messages[lang].enabled, lang + "-IN", () => {
       setStatus("enabled");
-    }, 400);
+    });
   }
 
-  // If enabled by click, show language choice
   function enableByClick() {
     setShowLangChoice(true);
-    if (recognitionRef.current) recognitionRef.current.stop();
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
   }
 
   function handleLangPick(lang) {
     setChosenLang(lang);
     setVoiceEnabled(true);
     setShowLangChoice(false);
-    setTimeout(() => {
-      speak(messages[lang].enabled, lang+"-IN");
+    setStatus("enabled-announce");
+    
+    window.speechSynthesis.cancel();
+    
+    // Speak enabled message WITHOUT showing overlay
+    speak(messages[lang].enabled, lang + "-IN", () => {
       setStatus("enabled");
-    }, 400);
+    });
   }
 
   return (
     <div className="voice-guide">
-      {/* Overlay */}
-      {(status==="init" || status==="welcoming") && (
-        <div className="guide-overlay">
-          <div className="guide-box">
-            <div className="loader"></div>
-            <h2 style={{color:"#FF7A00"}}>Loading voice experience…</h2>
-            <p>Setting up voice and speaker access.</p>
-          </div>
-        </div>
-      )}
-
-      {status==="ask-guidance" && (
+      {/* Show overlay for ask-guidance and language choice, but NOT for enabled-announce */}
+      {status === "ask-guidance" && !showLangChoice && (
         <div className="guide-overlay">
           <div className="guide-box text-center">
-            <h2 style={{color:"#FF7A00"}}>Enable Voice Guidance?</h2>
-            <p>Allow a guided browsing experience for accessibility support.<br /><small style={{color:"#333"}}>Say <b>'Enable Voice Aid'</b> or tap Enable below.</small></p>
-            <button onClick={enableByClick} className="btn btn-warning mt-2" style={{borderRadius:16, minWidth:120, color:"#fff", background:"linear-gradient(90deg,#FF9900 0%,#FF7A00 100%)", fontWeight:600}}>Enable</button>
-            <button onClick={()=>setStatus("no-guide")} className="btn btn-outline-secondary mt-2 ms-2" style={{borderRadius:16, minWidth:110}}>Not Now</button>
+            <h2 style={{ color: "#FF7A00" }}>Enable Voice Guidance?</h2>
+            <p>
+              Allow a guided browsing experience for accessibility support.
+              <br />
+              <small style={{ color: "#333" }}>
+                Say <b>'Enable Voice Aid'</b> or tap Enable below.
+              </small>
+            </p>
+            <button
+              onClick={enableByClick}
+              className="btn btn-warning mt-2"
+              style={{
+                borderRadius: 16,
+                minWidth: 120,
+                color: "#fff",
+                background: "linear-gradient(90deg,#FF9900 0%,#FF7A00 100%)",
+                fontWeight: 600,
+              }}
+            >
+              Enable
+            </button>
+            <button
+              onClick={() => setStatus("no-guide")}
+              className="btn btn-outline-secondary mt-2 ms-2"
+              style={{ borderRadius: 16, minWidth: 110 }}
+            >
+              Not Now
+            </button>
           </div>
         </div>
       )}
@@ -157,25 +255,41 @@ export default function VoiceAccessGuide() {
       {showLangChoice && (
         <div className="guide-overlay">
           <div className="guide-box">
-            <h3 style={{color:"#FF7A00"}}>Choose Language</h3>
+            <h3 style={{ color: "#FF7A00" }}>Choose Language</h3>
             <p>Select a language for voice aid:</p>
             <div className="d-flex justify-content-center gap-2">
-              <button className="btn btn-warning" style={{borderRadius:16, minWidth:100, color:"#fff", background:"linear-gradient(90deg,#FF9900 0%,#FF7A00 100%)", fontWeight:600}} onClick={()=>handleLangPick("en")}>English</button>
-              <button className="btn btn-warning" style={{borderRadius:16, minWidth:100, color:"#fff", background:"linear-gradient(90deg,#FF9900 0%,#FF7A00 100%)", fontWeight:600}} onClick={()=>handleLangPick("hi")}>Hindi</button>
-              <button className="btn btn-warning" style={{borderRadius:16, minWidth:100, color:"#fff", background:"linear-gradient(90deg,#FF9900 0%,#FF7A00 100%)", fontWeight:600}} onClick={()=>handleLangPick("ta")}>Tamil</button>
+              <button
+                className="btn btn-warning"
+                style={{
+                  borderRadius: 16,
+                  minWidth: 100,
+                  color: "#fff",
+                  background: "linear-gradient(90deg,#FF9900 0%,#FF7A00 100%)",
+                  fontWeight: 600,
+                }}
+                onClick={() => handleLangPick("en")}
+              >
+                English
+              </button>
+              <button
+                className="btn btn-warning"
+                style={{
+                  borderRadius: 16,
+                  minWidth: 100,
+                  color: "#fff",
+                  background: "linear-gradient(90deg,#FF9900 0%,#FF7A00 100%)",
+                  fontWeight: 600,
+                }}
+                onClick={() => handleLangPick("hi")}
+              >
+                Hindi
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {status==="enabled-announce" && (
-        <div className="guide-overlay">
-          <div className="guide-box">
-            <h2 style={{color:"#FF7A00"}}>Voice Guidance Enabled!</h2>
-            <p>Personalized guidance will be delivered in your language.</p>
-          </div>
-        </div>
-      )}
+      {/* NO overlay for enabled-announce - voice speaks in background */}
     </div>
   );
 }
