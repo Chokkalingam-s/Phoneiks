@@ -42,7 +42,7 @@ export default function Navbar() {
           </div>
         </div>
         <div className="d-flex align-items-center">
-          <a href="#" className="btn btn-link text-decoration-none text-orange d-flex align-items-center me-2">
+          <a href="/pwd-login" className="btn btn-link text-decoration-none text-orange d-flex align-items-center me-2">
             <FaUserCircle /><span className="ms-1">PwD login</span>
           </a>
           <a href="#" className="btn btn-link text-decoration-none text-orange d-flex align-items-center">
