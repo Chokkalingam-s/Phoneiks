@@ -12,6 +12,8 @@ import PwdDashboard from "./pages/PwdDashboard.jsx";
 import OrganisationLogin from "./pages/OrganisationLogin";
 import OrganisationDashboard from "./pages/OrganisationDashboard";
 import OrganisationContentUpload from "./pages/OrganisationContentUpload";
+import MinistryLogin from "./pages/MinistryLogin"; 
+import MinistryDashboard from "./pages/MinistryDashboard"; 
 
 
 import { AppProvider, AppContext } from "./context/AppContext.jsx";
@@ -45,6 +47,9 @@ const MainApp = () => {
           <Route path="/organisation-login" element={<OrganisationLogin />} />
           <Route path="/org-dashboard" element={<OrganisationDashboard />} />
           <Route path="/organisation-forum" element={<OrganisationContentUpload />} />
+          <Route path="/ministry-login" element={<MinistryLogin />} />
+          <Route path="/ministry-dashboard" element={<MinistryDashboard />} />
+
         </Routes>
       </main>
       <Footer />
