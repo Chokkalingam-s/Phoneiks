@@ -14,13 +14,20 @@ const messages = {
 
 function speak(msg, lang = "en-IN", cb) {
   window.speechSynthesis.cancel();
-  const utter = new window.SpeechSynthesisUtterance(msg);
-  utter.lang = lang;
-  utter.rate = 0.9;
-  utter.pitch = 1.0;
-  utter.volume = 1.0;
-  utter.onend = cb;
-  window.speechSynthesis.speak(utter);
+  
+  setTimeout(() => {
+    const utter = new window.SpeechSynthesisUtterance(msg);
+    utter.lang = lang;
+    utter.rate = 0.9;
+    utter.pitch = 1.0;
+    utter.volume = 1.0;
+    utter.onend = cb;
+    utter.onerror = (e) => {
+      console.error("Guide speech error:", e.error);
+      if (cb) cb();
+    };
+    window.speechSynthesis.speak(utter);
+  }, 100);
 }
 
 function getLangCode(s) {

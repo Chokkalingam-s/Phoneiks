@@ -18,42 +18,63 @@ export default function ApplyForUdid() {
   };
 
   useEffect(() => {
+    console.log("📄 ApplyForUdid mounted, voiceEnabled:", voiceEnabled);
+    
     // Register voice command callback for "proceed"
     if (voiceEnabled) {
       registerActionCallback(handleVoiceCommand);
       
-      // Read page content after a delay to ensure navigation audio is complete
+      // Read page content after a delay
       if (!hasReadContent.current) {
+        console.log("⏳ Scheduling page content reading...");
         hasReadContent.current = true;
-        const delay = setTimeout(() => {
-          readPageContent();
-        }, 1500); // Wait 1.5 seconds after page load
         
-        return () => clearTimeout(delay);
+        const delay = setTimeout(() => {
+          console.log("🎯 Reading page content NOW");
+          readPageContent();
+        }, 2500);
+        
+        return () => {
+          console.log("🧹 Cleaning up timeout");
+          clearTimeout(delay);
+          unregisterActionCallback();
+        };
       }
     }
 
     // Cleanup
     return () => {
+      console.log("🧹 Unregistering action callback");
       unregisterActionCallback();
     };
+    // eslint-disable-next-line
   }, [voiceEnabled]);
 
   async function readPageContent() {
-    if (!voiceEnabled) return;
+    if (!voiceEnabled) {
+      console.log("⚠️ Voice not enabled, skipping read");
+      return;
+    }
     
     console.log("📖 Reading page content aloud");
-    const content = pageContent[chosenLang];
+    console.log("🌐 Language:", chosenLang);
     
-    await speak(content.text);
-    console.log("✅ Page content reading complete");
+    const content = pageContent[chosenLang];
+    console.log("📝 Content length:", content.text.length);
+    
+    try {
+      await speak(content.text);
+      console.log("✅ Page content reading complete");
+    } catch (error) {
+      console.error("❌ Error reading content:", error);
+    }
   }
 
   function handleVoiceCommand(transcript) {
     console.log("🎤 Checking for proceed command:", transcript);
     
-    // Check for "proceed" in English or Hindi
-    if (/proceed|आगे बढ़ें|aage badhe|aage badhein|aage/i.test(transcript)) {
+    // Check for "proceed" or Hindi equivalents - flexible matching
+    if (/(proceed|aage|आगे|badh|बढ़|continue|jaari|जारी)/i.test(transcript)) {
       console.log("✅ PROCEED command detected!");
       handleProceed();
       return true; // Command handled
@@ -69,12 +90,18 @@ export default function ApplyForUdid() {
       ? "पंजीकरण फॉर्म पर जा रहे हैं" 
       : "Proceeding to registration form";
     
+    // Speak and navigate
     await speak(msg);
     
     // Navigate to form
     setTimeout(() => {
       navigate("/apply-udid-form");
     }, 500);
+  }
+
+  // Handle button click
+  function handleButtonClick() {
+    handleProceed();
   }
 
   return (
@@ -112,7 +139,7 @@ export default function ApplyForUdid() {
               <div className="alert alert-info" role="alert">
                 <i className="bi bi-info-circle me-2"></i>
                 {chosenLang === "hi" 
-                  ? "जारी रखने के लिए 'आगे बढ़ें' कहें या नीचे दिए गए बटन पर क्लिक करें।"
+                  ? "जारी रखने के लिए 'आगे' कहें या नीचे दिए गए बटन पर क्लिक करें।"
                   : "Say 'proceed' or click the button below to continue."
                 }
               </div>
@@ -120,7 +147,7 @@ export default function ApplyForUdid() {
               <div className="text-center mt-4">
                 <button
                   ref={proceedButtonRef}
-                  onClick={handleProceed}
+                  onClick={handleButtonClick}
                   className="btn btn-lg btn-warning"
                   style={{
                     borderRadius: 16,

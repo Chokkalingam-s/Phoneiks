@@ -20,42 +20,6 @@ const messages = {
   },
 };
 
-function speak(msg, lang = "en-IN") {
-  return new Promise((resolve) => {
-    window.speechSynthesis.cancel();
-    
-    setTimeout(() => {
-      const utter = new window.SpeechSynthesisUtterance(msg);
-      utter.lang = lang;
-      utter.rate = 0.9;
-      utter.pitch = 1.0;
-      utter.volume = 1.0;
-      
-      utter.onstart = () => {
-        console.log("🔊 Audio STARTED:", msg.substring(0, 40));
-      };
-      
-      utter.onend = () => {
-        console.log("🔊 Audio ENDED");
-        setTimeout(resolve, 200);
-      };
-      
-      utter.onerror = (e) => {
-        console.error("🔊 Audio ERROR:", e.error);
-        resolve();
-      };
-      
-      window.speechSynthesis.speak(utter);
-    }, 100);
-  });
-}
-
-function getLangCode(s) {
-  s = s.toLowerCase();
-  if (/aawaaz|saksham|आवाज़|आवाज|hindi/i.test(s)) return "hi";
-  return "en";
-}
-
 export function VoiceProvider({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -154,7 +118,7 @@ export function VoiceProvider({ children }) {
 
         // Enable voice aid command
         if (!voiceEnabledRef.current) {
-          const enableCmdRegex = /(enable|voice|aid|guidance|aawaaz|आवाज़|आवाज|saksham|सक्षम|chalu|चालू|karein|करें)/i;
+          const enableCmdRegex = /(enable|voice|aid|guidance|aawaaz|aavaaz|awaz|आवाज|saksham|सक्षम|chalu|चालू|shuru|शुरू|karein|करें|karo|करो)/i;
 
           if (enableCmdRegex.test(transcript)) {
             console.log("🔊 Enabling voice aid...");
@@ -172,26 +136,81 @@ export function VoiceProvider({ children }) {
           }
         }
 
-        // Navigation commands
+        // Navigation commands with IMMEDIATE speech to preserve user gesture
         if (voiceEnabledRef.current) {
+          let navPath = null;
+          let navMsg = null;
+          
           // Home navigation
-          if (/home|होम|go home|go to home/i.test(transcript)) {
-            console.log("🏠 HOME command");
-            handleNavigation("/home", "home");
-            return;
+          if (/(home|होम|ghar|घर|jaao|jao|जाओ)/i.test(transcript)) {
+            console.log("🏠 HOME command detected");
+            navPath = "/home";
+            navMsg = chosenLangRef.current === "hi" ? "होम पेज पर जा रहे हैं" : "Navigating to home page";
           }
-
           // Login navigation
-          if (/login|लॉगिन|log in|go to login/i.test(transcript)) {
-            console.log("🔐 LOGIN command");
-            handleNavigation("/pwd-login", "login");
-            return;
+          else if (/(login|लॉगिन|log\s*in|signin|sign\s*in|dakhil|दाखिल)/i.test(transcript)) {
+            console.log("🔐 LOGIN command detected");
+            navPath = "/pwd-login";
+            navMsg = chosenLangRef.current === "hi" ? "लॉगिन पेज पर जा रहे हैं" : "Navigating to login page";
           }
-
           // Apply UDID navigation
-          if (/apply|यूडीआईडी|udid|apply udid|apply for udid/i.test(transcript)) {
-            console.log("📝 APPLY command");
-            handleNavigation("/apply-for-udid", "apply");
+          else if (/(apply|अप्लाई|udid|u\.?d\.?i\.?d|यूडी|यूडीआईडी|aavedan|aawadan|आवेदन)/i.test(transcript)) {
+            console.log("📝 APPLY UDID command detected");
+            navPath = "/apply-for-udid";
+            navMsg = chosenLangRef.current === "hi" ? "अप्लाई पेज पर जा रहे हैं" : "Navigating to apply page";
+          }
+          
+          // ✅ CRITICAL FIX: Speak IMMEDIATELY in the event handler to preserve user gesture
+          if (navPath && navMsg) {
+            const lang = chosenLangRef.current === "hi" ? "hi-IN" : "en-IN";
+            
+            // Cancel any existing speech
+            window.speechSynthesis.cancel();
+            
+            // Create utterance
+            const utter = new window.SpeechSynthesisUtterance(navMsg);
+            utter.lang = lang;
+            utter.rate = 0.9;
+            utter.pitch = 1.0;
+            utter.volume = 1.0;
+            
+            console.log(`🔊 Speaking IMMEDIATELY: "${navMsg}"`);
+            
+            // Speak NOW (while user gesture is active)
+            window.speechSynthesis.speak(utter);
+            
+            // Handle post-speech navigation
+            utter.onend = () => {
+              console.log("✅ Speech complete, navigating to", navPath);
+              navigate(navPath);
+              
+              // Restart recognition after navigation
+              setTimeout(() => {
+                isSpeakingRef.current = false;
+                if (voiceEnabledRef.current && !recognitionRef.current) {
+                  console.log("▶️ Resuming recognition");
+                  startRecognition();
+                }
+              }, 1500);
+            };
+            
+            utter.onerror = (e) => {
+              console.error("❌ Speech error:", e.error);
+              // Navigate anyway
+              navigate(navPath);
+              isSpeakingRef.current = false;
+              
+              setTimeout(() => {
+                if (voiceEnabledRef.current && !recognitionRef.current) {
+                  startRecognition();
+                }
+              }, 1500);
+            };
+            
+            // Stop recognition AFTER speech has started
+            isSpeakingRef.current = true;
+            stopRecognitionCompletely();
+            
             return;
           }
         }
@@ -236,48 +255,6 @@ export function VoiceProvider({ children }) {
     }
   }
 
-  async function handleNavigation(path, pageName) {
-    console.log(`\n🚀 Navigation to ${pageName.toUpperCase()}`);
-    
-    // STOP recognition first
-    isSpeakingRef.current = true;
-    await stopRecognitionCompletely();
-    
-    // Build message
-    const navMessages = {
-      home: { en: "Navigating to home page", hi: "होम पेज पर जा रहे हैं" },
-      login: { en: "Navigating to login page", hi: "लॉगिन पेज पर जा रहे हैं" },
-      apply: { en: "Navigating to apply page", hi: "अप्लाई पेज पर जा रहे हैं" }
-    };
-    
-    const msg = navMessages[pageName][chosenLangRef.current];
-    const lang = chosenLangRef.current === "hi" ? "hi-IN" : "en-IN";
-    
-    console.log(`🔊 Speaking: "${msg}"`);
-    
-    // Speak and wait for it to finish
-    await speak(msg, lang);
-    
-    console.log("✅ Speech done");
-    
-    // Wait a bit more before navigation
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    // Now navigate
-    console.log(`🔀 Navigating to ${path}`);
-    navigate(path);
-    
-    isSpeakingRef.current = false;
-    
-    // Restart recognition after navigation
-    setTimeout(() => {
-      if (voiceEnabledRef.current && !isSpeakingRef.current) {
-        console.log("▶️ Resuming recognition");
-        startRecognition();
-      }
-    }, 1000);
-  }
-
   async function enableVoice(lang = "en") {
     if (voiceEnabledRef.current) return;
 
@@ -295,10 +272,30 @@ export function VoiceProvider({ children }) {
 
     console.log("🔊 Speaking enabled message");
     
-    // Speak enabled message
-    await speak(messages[lang].enabled, lang + "-IN");
+    // Speak enabled message immediately
+    window.speechSynthesis.cancel();
     
-    console.log("✅ Enable speech complete");
+    const utter = new window.SpeechSynthesisUtterance(messages[lang].enabled);
+    utter.lang = lang + "-IN";
+    utter.rate = 0.9;
+    utter.pitch = 1.0;
+    utter.volume = 1.0;
+    
+    const speechPromise = new Promise((resolve) => {
+      utter.onend = () => {
+        console.log("✅ Enable speech complete");
+        resolve();
+      };
+      utter.onerror = (e) => {
+        console.error("❌ Enable speech error:", e.error);
+        resolve();
+      };
+      setTimeout(resolve, 8000); // Safety timeout
+    });
+    
+    window.speechSynthesis.speak(utter);
+    await speechPromise;
+    
     isSpeakingRef.current = false;
 
     // Start recognition
@@ -323,7 +320,33 @@ export function VoiceProvider({ children }) {
   async function speakText(msg) {
     isSpeakingRef.current = true;
     await stopRecognitionCompletely();
-    await speak(msg, chosenLangRef.current === "hi" ? "hi-IN" : "en-IN");
+    
+    // Speak immediately
+    window.speechSynthesis.cancel();
+    
+    const utter = new window.SpeechSynthesisUtterance(msg);
+    utter.lang = chosenLangRef.current === "hi" ? "hi-IN" : "en-IN";
+    utter.rate = 0.9;
+    utter.pitch = 1.0;
+    utter.volume = 1.0;
+    
+    const speechPromise = new Promise((resolve) => {
+      utter.onend = () => {
+        console.log("✅ Text speech complete");
+        resolve();
+      };
+      utter.onerror = (e) => {
+        console.error("❌ Text speech error:", e.error);
+        resolve();
+      };
+      setTimeout(resolve, 10000); // Safety timeout
+    });
+    
+    console.log("🔊 Speaking text:", msg.substring(0, 40));
+    window.speechSynthesis.speak(utter);
+    
+    await speechPromise;
+    
     isSpeakingRef.current = false;
     
     setTimeout(() => {
@@ -354,4 +377,10 @@ export function VoiceProvider({ children }) {
   };
 
   return <VoiceContext.Provider value={value}>{children}</VoiceContext.Provider>;
+}
+
+function getLangCode(s) {
+  s = s.toLowerCase();
+  if (/aawaaz|aavaaz|awaz|आवाज|saksham|सक्षम|hindi/i.test(s)) return "hi";
+  return "en";
 }
