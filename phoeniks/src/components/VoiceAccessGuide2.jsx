@@ -1,14 +1,20 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useVoice } from "./VoiceContext";
+import { useNavigate } from "react-router-dom";
 
 const messages = {
   en: {
     combined:
       "Welcome to Phoeniks. For voice Guidance Say 'Enable Voice aid' or click 'Enable button'.",
+    enabled:
+      "Voice guidance activated. This website is developed for specially abled individuals across India. Apply UDID if not registered yet.",
+    selectLang: "Please select your preferred language for voice guidance.",
   },
   hi: {
     combined:
       "फीनिक्स में आपका स्वागत है। वॉइस गाइड के लिए कहें 'आवाज़ सक्षम करें' या 'सक्रिय करें' बटन दबाएं।",
+    enabled:
+      "वॉइस गाइडेंस सक्रिय कर दी गई है। यह वेबसाइट भारत भर के दिव्यांग व्यक्तियों के लिए विकसित की गई है। यदि अभी तक पंजीकरण नहीं किया है तो यूडीआईडी के लिए आवेदन करें।",
+    selectLang: "कृपया अपनी पसंदीदा भाषा चुनें।",
   },
 };
 
@@ -25,22 +31,27 @@ function speak(msg, lang = "en-IN", cb) {
 
 function getLangCode(s) {
   s = s.toLowerCase();
-  if (/aawaaz|saksham|आवाज़|आवाज|hindi/i.test(s)) return "hi";
+  if (/aawaaz|saksham|आवाज़|आवाज|hindi/.test(s)) return "hi";
   return "en";
 }
 
 export default function VoiceAccessGuide() {
-  const { voiceEnabled, enableVoice } = useVoice();
+  const navigate = useNavigate();
 
   const [permissionAsked, setPermissionAsked] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [showLangChoice, setShowLangChoice] = useState(false);
+  const [chosenLang, setChosenLang] = useState("en");
   const [status, setStatus] = useState("ask-guidance");
-
+  
+  // USE REFS TO AVOID STALE CLOSURE ISSUE
+  const voiceEnabledRef = useRef(false);
+  const chosenLangRef = useRef("en");
   const recognitionRef = useRef(null);
   const restartTimeoutRef = useRef(null);
 
   useEffect(() => {
-    if (permissionAsked || voiceEnabled) return;
+    if (permissionAsked) return;
 
     if (navigator.mediaDevices && window.SpeechSynthesis) {
       navigator.mediaDevices
@@ -67,7 +78,7 @@ export default function VoiceAccessGuide() {
       window.speechSynthesis.cancel();
     };
     // eslint-disable-next-line
-  }, [permissionAsked, voiceEnabled]);
+  }, []);
 
   function sequenceWelcome() {
     speak(messages.en.combined, "en-IN", () => {
@@ -93,31 +104,106 @@ export default function VoiceAccessGuide() {
     recog.continuous = true;
     recog.interimResults = false;
     recog.maxAlternatives = 3;
-    recog.lang = "en-IN";
+    recog.lang = chosenLangRef.current === "hi" ? "hi-IN" : "en-IN";
 
     recog.onresult = function (event) {
       for (let i = event.resultIndex; i < event.results.length; i++) {
         if (!event.results[i].isFinal) continue;
 
         const transcript = event.results[i][0].transcript.trim().toLowerCase();
-        console.log("🎤 Initial capture:", transcript);
+        console.log("🎤 Captured:", transcript);
+        console.log("✅ Voice Enabled (ref):", voiceEnabledRef.current);
 
-        const enableCmdRegex = /(enable|voice|aid|guidance|aawaaz|आवाज़|आवाज|saksham|सक्षम|chalu|चालू|karein|करें)/i;
+        // Enable voice aid command (only when not enabled yet)
+        if (!voiceEnabledRef.current) {
+          const enableCmdRegex = /(enable|voice|aid|guidance|aawaaz|आवाज़|आवाज|saksham|सक्षम|chalu|चालू|karein|करें)/i;
+          
+          if (enableCmdRegex.test(transcript)) {
+            console.log("🔊 Enabling voice aid...");
+            window.speechSynthesis.cancel();
+            const lang = getLangCode(transcript);
+            onEnableVoice(lang);
+            return;
+          }
+        }
 
-        if (enableCmdRegex.test(transcript)) {
-          console.log("🔊 Enabling from guide...");
-          window.speechSynthesis.cancel();
-          const lang = getLangCode(transcript);
-          handleEnableVoice(lang);
-          return;
+        // Navigation commands (ONLY when voice is enabled)
+        if (voiceEnabledRef.current) {
+          console.log("🚀 Checking navigation commands...");
+
+          // Home navigation
+          if (/home|होम|go home|go to home/.test(transcript)) {
+            console.log("🏠 Navigating to HOME");
+            window.speechSynthesis.cancel();
+            speak(
+              chosenLangRef.current === "hi"
+                ? "आपको होम पेज पर ले जाया जा रहा है"
+                : "Navigating to home page",
+              chosenLangRef.current === "hi" ? "hi-IN" : "en-IN",
+              () => {
+                navigate("/home");
+              }
+            );
+            return;
+          }
+
+          // Login navigation
+          if (/login|लॉगिन|log in|go to login/.test(transcript)) {
+            console.log("🔐 Navigating to LOGIN");
+            window.speechSynthesis.cancel();
+            speak(
+              chosenLangRef.current === "hi"
+                ? "आपको लॉगिन पेज पर ले जाया जा रहा है"
+                : "Navigating to login page",
+              chosenLangRef.current === "hi" ? "hi-IN" : "en-IN",
+              () => {
+                navigate("/pwd-login");
+              }
+            );
+            return;
+          }
+
+          // Apply UDID navigation
+          if (/apply|यूडीआईडी|udid|apply udid|apply for udid/.test(transcript)) {
+            console.log("📝 Navigating to APPLY");
+            window.speechSynthesis.cancel();
+            speak(
+              chosenLangRef.current === "hi"
+                ? "आपको अप्लाई पेज पर ले जाया जा रहा है"
+                : "Navigating to apply page",
+              chosenLangRef.current === "hi" ? "hi-IN" : "en-IN",
+              () => {
+                navigate("/apply-for-udid");
+              }
+            );
+            return;
+          }
+        } else {
+          console.log("⚠️ Voice not enabled yet, ignoring navigation commands");
         }
       }
     };
 
-    recog.onerror = function (e) {
-      console.log("❌ Guide recognition error:", e.error);
+    recog.onaudiostart = function () {
+      console.log("🎙️ Audio capturing started");
+    };
 
-      if (status === "ask-guidance" && !voiceEnabled) {
+    recog.onsoundstart = function () {
+      console.log("🔊 Sound detected");
+    };
+
+    recog.onspeechstart = function () {
+      console.log("💬 Speech detected");
+    };
+
+    recog.onerror = function (e) {
+      console.log("❌ Recognition error:", e.error);
+
+      if (e.error === "no-speech") {
+        console.log("🔄 No speech detected, will restart...");
+      }
+
+      if (status !== "no-guide") {
         restartTimeoutRef.current = setTimeout(() => {
           try {
             if (recognitionRef.current) {
@@ -131,12 +217,13 @@ export default function VoiceAccessGuide() {
     };
 
     recog.onend = function () {
-      console.log("⏹️ Guide recognition ended");
-      if (status === "ask-guidance" && !voiceEnabled) {
+      console.log("⏹️ Recognition ended");
+      if (status !== "no-guide") {
         restartTimeoutRef.current = setTimeout(() => {
           try {
             if (recognitionRef.current) {
               recog.start();
+              console.log("🔄 Recognition restarted");
             }
           } catch (err) {
             console.log("Restart error:", err);
@@ -148,15 +235,27 @@ export default function VoiceAccessGuide() {
     try {
       recog.start();
       recognitionRef.current = recog;
-      console.log("▶️ Guide recognition started");
+      console.log("▶️ Recognition started, language:", recog.lang);
     } catch (err) {
       console.log("Start error:", err);
     }
   }
 
-  function handleEnableVoice(lang) {
-    setStatus("enabled");
+  function onEnableVoice(lang = "en") {
+    if (voiceEnabledRef.current) return;
 
+    console.log("✅ ENABLING VOICE with language:", lang);
+
+    // Update both state and ref
+    setVoiceEnabled(true);
+    voiceEnabledRef.current = true;
+    
+    setChosenLang(lang);
+    chosenLangRef.current = lang;
+    
+    setStatus("enabled-announce");
+
+    // Stop current recognition
     if (recognitionRef.current) {
       recognitionRef.current.stop();
       recognitionRef.current = null;
@@ -165,8 +264,16 @@ export default function VoiceAccessGuide() {
       clearTimeout(restartTimeoutRef.current);
     }
 
-    // Enable through context (this persists across routes)
-    enableVoice(lang);
+    window.speechSynthesis.cancel();
+
+    // Speak enabled message then restart recognition
+    speak(messages[lang].enabled, lang + "-IN", () => {
+      setStatus("enabled");
+      setTimeout(() => {
+        console.log("🔄 Restarting recognition after voice enable");
+        startRecognition();
+      }, 300);
+    });
   }
 
   function enableByClick() {
@@ -181,16 +288,27 @@ export default function VoiceAccessGuide() {
   }
 
   function handleLangPick(lang) {
+    console.log("🌐 Language picked:", lang);
+
+    // Update both state and ref
+    setChosenLang(lang);
+    chosenLangRef.current = lang;
+    
+    setVoiceEnabled(true);
+    voiceEnabledRef.current = true;
+    
     setShowLangChoice(false);
-    setStatus("enabled");
+    setStatus("enabled-announce");
 
-    // Enable through context
-    enableVoice(lang);
-  }
+    window.speechSynthesis.cancel();
 
-  // Don't show overlay if voice is already enabled
-  if (voiceEnabled || status === "enabled") {
-    return null;
+    speak(messages[lang].enabled, lang + "-IN", () => {
+      setStatus("enabled");
+      setTimeout(() => {
+        console.log("🔄 Restarting recognition after language pick");
+        startRecognition();
+      }, 300);
+    });
   }
 
   return (
